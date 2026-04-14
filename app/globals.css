@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* BASE */
+body {
+  background: #0f172a;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* 🔥 REMOVE SETAS DO INPUT NUMBER */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 🔥 INPUT PADRÃO GLOBAL (fica bonito no sistema todo) */
+input {
+  background: #1a2438;
+  border: 1px solid #2a3a5a;
+  border-radius: 10px;
+  color: #fff;
+  padding: 10px 14px;
+  font-family: 'Montserrat', sans-serif;
+  outline: none;
+}
+
+/* 🔥 BOTÃO PADRÃO */
+button {
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* 🔥 HOVER PADRÃO */
+button:hover {
+  opacity: 0.9;
+}
