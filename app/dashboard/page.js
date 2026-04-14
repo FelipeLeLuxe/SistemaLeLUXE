@@ -110,7 +110,7 @@ export default function Dashboard() {
 
   const lucroMes = vendasMes.reduce(
     (a, v) => a + (Number(v.valor_total || 0) - Number(v.custo_total || 0)),
-    0 me fala
+    0 
   )
 
   const dias = Array.from({ length: 31 }, (_, i) => i + 1)
