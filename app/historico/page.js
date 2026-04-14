@@ -1,7 +1,5 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -9,6 +7,8 @@ import '@fontsource/montserrat/400.css'
 import '@fontsource/montserrat/600.css'
 
 export default function Historico() {
+  const [mounted, setMounted] = useState(false)
+
   const [vendas, setVendas] = useState([])
   const [produtos, setProdutos] = useState([])
   const [vendasFiltradas, setVendasFiltradas] = useState([])
@@ -23,15 +23,22 @@ export default function Historico() {
   const [tipo, setTipo] = useState(null)
   const [produtoURL, setProdutoURL] = useState(null)
 
+  // 🔥 GARANTE QUE SÓ RODA NO CLIENTE
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      setTipo(params.get('tipo'))
-      setProdutoURL(params.get('produto'))
-    }
+    setMounted(true)
   }, [])
 
   useEffect(() => {
+    if (!mounted) return
+
+    const params = new URLSearchParams(window.location.search)
+    setTipo(params.get('tipo'))
+    setProdutoURL(params.get('produto'))
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted) return
+
     buscar()
 
     function check() {
@@ -42,11 +49,12 @@ export default function Historico() {
     window.addEventListener('resize', check)
 
     return () => window.removeEventListener('resize', check)
-  }, [])
+  }, [mounted])
 
   useEffect(() => {
+    if (!mounted) return
     aplicarFiltro()
-  }, [vendas, busca, dataInicio, dataFim, tipo, produtoURL])
+  }, [vendas, busca, dataInicio, dataFim, tipo, produtoURL, mounted])
 
   async function buscar() {
     const { data: v } = await supabase
@@ -120,6 +128,9 @@ export default function Historico() {
   function limparFiltro() {
     window.location.href = '/historico'
   }
+
+  // 🔥 EVITA QUEBRAR BUILD
+  if (!mounted) return null
 
   const vendasSafe = vendasFiltradas || []
 
