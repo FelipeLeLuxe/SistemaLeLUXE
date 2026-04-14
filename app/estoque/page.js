@@ -17,6 +17,7 @@ export default function Estoque() {
   const [preco, setPreco] = useState('')
   const [custo, setCusto] = useState('')
   const [estoque, setEstoque] = useState('')
+  const [marca, setMarca] = useState('')
 
   useEffect(() => {
     buscarProdutos()
@@ -40,9 +41,18 @@ export default function Estoque() {
     const { data } = await supabase
       .from('produtos')
       .select('*')
-      .order('ordem', { ascending: true })
 
-    setProdutos(data || [])
+    const ordenado = (data || []).sort((a, b) => {
+      const marcaA = (a.marca || '').toLowerCase()
+      const marcaB = (b.marca || '').toLowerCase()
+
+      if (marcaA < marcaB) return -1
+      if (marcaA > marcaB) return 1
+
+      return (a.ordem || 0) - (b.ordem || 0)
+    })
+
+    setProdutos(ordenado)
   }
 
   async function criarProduto() {
@@ -54,6 +64,7 @@ export default function Estoque() {
         preco: Number(preco),
         custo: Number(custo || 0),
         estoque: Number(estoque || 0),
+        marca,
         ordem: novaOrdem
       }
     ])
@@ -62,6 +73,7 @@ export default function Estoque() {
     setPreco('')
     setCusto('')
     setEstoque('')
+    setMarca('')
     buscarProdutos()
   }
 
@@ -76,7 +88,8 @@ export default function Estoque() {
       .update({
         nome: formEdit.nome,
         preco: Number(formEdit.preco),
-        custo: Number(formEdit.custo)
+        custo: Number(formEdit.custo),
+        marca: formEdit.marca
       })
       .eq('id', editando)
 
@@ -148,6 +161,19 @@ export default function Estoque() {
           <input placeholder="Custo" value={custo} onChange={e => setCusto(e.target.value)} style={styles.input} />
           <input placeholder="Estoque" value={estoque} onChange={e => setEstoque(e.target.value)} style={styles.input} />
 
+          <select value={marca} onChange={e => setMarca(e.target.value)} style={styles.input}>
+            <option value="">Marca</option>
+            <option value="Lattafa">Lattafa</option>
+            <option value="Armaf">Armaf</option>
+            <option value="Afnan">Afnan</option>
+            <option value="Maison Alhambra">Maison Alhambra</option>
+            <option value="Rasasi">Rasasi</option>
+            <option value="French Avenue">French Avenue</option>
+            <option value="Rayhaam">Rayhaam</option>
+            <option value="Al Wataniah">Al Wataniah</option>
+            <option value="Aurora Scents">Aurora Scents</option>
+          </select>
+
           <button style={{
             ...styles.button,
             width: mobile ? '100%' : 'auto'
@@ -177,6 +203,12 @@ export default function Estoque() {
               <>
                 <div style={styles.colNome}>
                   <div style={styles.nome}>{p.nome}</div>
+
+                  {p.marca && (
+                    <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                      {p.marca}
+                    </div>
+                  )}
 
                   <div style={{
                     ...styles.valores,
@@ -208,6 +240,23 @@ export default function Estoque() {
                 <input value={formEdit.nome} onChange={e => setFormEdit({ ...formEdit, nome: e.target.value })} style={styles.input} />
                 <input value={formEdit.preco} onChange={e => setFormEdit({ ...formEdit, preco: e.target.value })} style={styles.input} />
                 <input value={formEdit.custo} onChange={e => setFormEdit({ ...formEdit, custo: e.target.value })} style={styles.input} />
+
+                <select
+                  value={formEdit.marca || ''}
+                  onChange={e => setFormEdit({ ...formEdit, marca: e.target.value })}
+                  style={{ ...styles.input, padding: 8, fontSize: 12 }}
+                >
+                  <option value="">Marca</option>
+                  <option value="Lattafa">Lattafa</option>
+                  <option value="Armaf">Armaf</option>
+                  <option value="Afnan">Afnan</option>
+                  <option value="Maison Alhambra">Maison Alhambra</option>
+                  <option value="Rasasi">Rasasi</option>
+                  <option value="French Avenue">French Avenue</option>
+                  <option value="Rayhaam">Rayhaam</option>
+                  <option value="Al Wataniah">Al Wataniah</option>
+                  <option value="Aurora Scents">Aurora Scents</option>
+                </select>
 
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button style={styles.button} onClick={salvarEdicao}>Salvar</button>
