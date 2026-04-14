@@ -56,7 +56,6 @@ export default function Dashboard() {
 
   async function carregar() {
     const { data: p } = await supabase.from('produtos').select('*')
-
     const { data: v } = await supabase
       .from('vendas')
       .select('*')
@@ -66,14 +65,17 @@ export default function Dashboard() {
     setVendas(v || [])
   }
 
-  const estoqueTotal = produtos.reduce((a, p) => a + Number(p.estoque || 0), 0)
+  const produtosSafe = produtos || []
+  const vendasSafe = vendas || []
 
-  const valorPotencial = produtos.reduce(
+  const estoqueTotal = produtosSafe.reduce((a, p) => a + Number(p.estoque || 0), 0)
+
+  const valorPotencial = produtosSafe.reduce(
     (a, p) => a + Number(p.preco || 0) * Number(p.estoque || 0),
     0
   )
 
-  const valorInvestido = produtos.reduce(
+  const valorInvestido = produtosSafe.reduce(
     (a, p) => a + Number(p.custo || 0) * Number(p.estoque || 0),
     0
   )
@@ -82,35 +84,36 @@ export default function Dashboard() {
 
   const hoje = new Date()
 
-  const vendasHoje = vendas.filter(v => {
-    if (!v.created_at) return false
+  const vendasHoje = vendasSafe.filter(v => {
+    if (!v?.created_at) return false
     const d = new Date(v.created_at)
     return d.toDateString() === hoje.toDateString()
   })
 
   const faturamentoHoje = vendasHoje.reduce(
-    (a, v) => a + Number(v.valor_total || 0),
+    (a, v) => a + Number(v?.valor_total || 0),
     0
   )
 
   const lucroHoje = vendasHoje.reduce(
-    (a, v) => a + (Number(v.valor_total || 0) - Number(v.custo_total || 0)),
+    (a, v) => a + (Number(v?.valor_total || 0) - Number(v?.custo_total || 0)),
     0
   )
 
-  const vendasMes = vendas.filter(v => {
+  const vendasMes = vendasSafe.filter(v => {
+    if (!v?.created_at) return false
     const d = new Date(v.created_at)
     return d.getMonth() === hoje.getMonth()
   })
 
   const faturamentoMes = vendasMes.reduce(
-    (a, v) => a + Number(v.valor_total || 0),
+    (a, v) => a + Number(v?.valor_total || 0),
     0
   )
 
   const lucroMes = vendasMes.reduce(
-    (a, v) => a + (Number(v.valor_total || 0) - Number(v.custo_total || 0)),
-    0 
+    (a, v) => a + (Number(v?.valor_total || 0) - Number(v?.custo_total || 0)),
+    0
   )
 
   const dias = Array.from({ length: 31 }, (_, i) => i + 1)
@@ -118,7 +121,7 @@ export default function Dashboard() {
   const vendasPorDia = dias.map(dia => {
     return vendasMes
       .filter(v => new Date(v.created_at).getDate() === dia)
-      .reduce((a, v) => a + Number(v.valor_total || 0), 0)
+      .reduce((a, v) => a + Number(v?.valor_total || 0), 0)
   })
 
   const chartMes = {
@@ -147,40 +150,9 @@ export default function Dashboard() {
         <h3 style={styles.boxTitle}>🔥 Vendas de Hoje</h3>
 
         <div style={styles.cards}>
-          <div onClick={() => irParaHistorico({ tipo: 'hoje' })}>
-            <Card title="Faturamento" value={`R$ ${formatar(faturamentoHoje)}`} />
-          </div>
-
-          <div onClick={() => irParaHistorico({ tipo: 'hoje' })}>
-            <Card
-              title="Lucro"
-              value={`R$ ${formatar(lucroHoje)}`}
-              cor={lucroHoje >= 0 ? '#22c55e' : '#ef4444'}
-            />
-          </div>
-
-          <div onClick={() => irParaHistorico({ tipo: 'hoje' })}>
-            <Card title="Qtd" value={vendasHoje.length} />
-          </div>
-        </div>
-
-        <div style={{ marginTop: 20 }}>
-          {vendasHoje.length === 0 && (
-            <p style={{ opacity: 0.5 }}>Nenhuma venda hoje</p>
-          )}
-
-          {vendasHoje.map(v => {
-            const produto = produtos.find(p => p.id == v.produto_id)
-
-            return (
-              <div key={v.id} onClick={() => irParaHistorico({ produto: v.produto_id })}>
-                <Item>
-                  <span>{produto?.nome}</span>
-                  <span>R$ {formatar(v.valor_total)}</span>
-                </Item>
-              </div>
-            )
-          })}
+          <Card title="Faturamento" value={`R$ ${formatar(faturamentoHoje)}`} />
+          <Card title="Lucro" value={`R$ ${formatar(lucroHoje)}`} />
+          <Card title="Qtd" value={vendasHoje.length} />
         </div>
       </div>
 
@@ -188,128 +160,45 @@ export default function Dashboard() {
         <div style={styles.box}>
           <h3 style={styles.boxTitle}>🔥 Mais lucrativos</h3>
 
-          {produtos
-            .map(p => ({
-              ...p,
-              lucro: Number(p.preco) - Number(p.custo)
-            }))
-            .sort((a, b) => b.lucro - a.lucro)
-            .slice(0, 5)
-            .map(p => (
-              <div key={p.id} onClick={() => irParaHistorico({ produto: p.id })}>
-                <Item>
-                  <span>{p.nome}</span>
-                  <span style={{ color: '#22c55e' }}>
-                    R$ {formatar(p.lucro)}
-                  </span>
-                </Item>
-              </div>
-            ))}
+          {produtosSafe.map(p => (
+            <Item key={p.id}>
+              <span>{p.nome}</span>
+              <span>R$ {formatar(Number(p.preco) - Number(p.custo))}</span>
+            </Item>
+          ))}
         </div>
 
         <div style={styles.box}>
           <h3 style={styles.boxTitle}>📦 Produtos em estoque</h3>
 
-          {produtos.map(p => (
-            <div key={p.id} onClick={() => irParaHistorico({ produto: p.id })}>
-              <Item>
-                <span>{p.nome}</span>
-                <span>{p.estoque} un</span>
-              </Item>
-            </div>
+          {produtosSafe.map(p => (
+            <Item key={p.id}>
+              <span>{p.nome}</span>
+              <span>{p.estoque} un</span>
+            </Item>
           ))}
         </div>
       </div>
 
       <div style={styles.box}>
-        <h3 style={styles.boxTitle}>⚠ Baixa margem</h3>
-
-        {produtos.filter(p => ((p.preco - p.custo) / p.preco) * 100 < 30).length === 0 && (
-          <p style={{ opacity: 0.5 }}>Tudo saudável</p>
-        )}
-
-        {produtos
-          .filter(p => ((p.preco - p.custo) / p.preco) * 100 < 30)
-          .map(p => {
-            const margem = ((p.preco - p.custo) / p.preco) * 100
-
-            return (
-              <div key={p.id} onClick={() => irParaHistorico({ produto: p.id })}>
-                <Item>
-                  <span>{p.nome}</span>
-                  <span style={{ color: '#ef4444' }}>
-                    {margem.toFixed(1)}%
-                  </span>
-                </Item>
-              </div>
-            )
-          })}
-      </div>
-
-      <div style={styles.grid}>
-        <div style={styles.box}>
-          <h3 style={styles.boxTitle}>💰 Mês atual</h3>
-
-          <div style={styles.cards}>
-            <div onClick={() => irParaHistorico({ tipo: 'mes' })}>
-              <Card title="Faturamento" value={`R$ ${formatar(faturamentoMes)}`} />
-            </div>
-
-            <div onClick={() => irParaHistorico({ tipo: 'mes' })}>
-              <Card title="Lucro" value={`R$ ${formatar(lucroMes)}`} />
-            </div>
-
-            <div onClick={() => irParaHistorico({ tipo: 'mes' })}>
-              <Card title="Vendas" value={vendasMes.length} />
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.box}>
-          <h3 style={styles.boxTitle}>📊 Vendas do mês</h3>
-          <Bar data={chartMes} />
-        </div>
+        <h3 style={styles.boxTitle}>📊 Vendas do mês</h3>
+        <Bar data={chartMes} />
       </div>
     </div>
   )
 }
 
-function Card({ title, value, destaque, cor }) {
-  const [hover, setHover] = useState(false)
-
+function Card({ title, value }) {
   return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        ...styles.card,
-        transform: hover ? 'scale(1.05)' : 'scale(1)',
-        border: destaque ? '1px solid #3b82f6' : 'none',
-        cursor: 'pointer'
-      }}
-    >
-      <p style={{ opacity: 0.6 }}>{title}</p>
-      <h2 style={{ color: cor || '#fff' }}>{value}</h2>
+    <div style={styles.card}>
+      <p>{title}</p>
+      <h2>{value}</h2>
     </div>
   )
 }
 
 function Item({ children }) {
-  const [hover, setHover] = useState(false)
-
-  return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        ...styles.item,
-        background: hover ? '#1a2438' : '#0f172a',
-        cursor: 'pointer'
-      }}
-    >
-      {children}
-    </div>
-  )
+  return <div style={styles.item}>{children}</div>
 }
 
 const styles = {
@@ -345,9 +234,7 @@ const styles = {
   card: {
     background: '#1a2438',
     padding: 18,
-    borderRadius: 12,
-    width: 180,
-    transition: '0.2s'
+    borderRadius: 12
   },
   item: {
     display: 'flex',
