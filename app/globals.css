@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 /* RESET */
 * {
@@ -7,14 +8,79 @@
   box-sizing: border-box;
 }
 
-/* BASE */
-body {
-  background: #0f172a;
-  color: #fff;
-  font-family: 'Montserrat', sans-serif;
+/* VARIÁVEIS GLOBAIS */
+:root {
+  /* cores */
+  --bg-main: #0b1220;
+  --bg-card: #111827;
+  --bg-input: #1a2438;
+
+  --border-default: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.12);
+
+  --primary: #00ff9c;
+  --primary-soft: rgba(0,255,156,0.15);
+
+  --text-main: #e6edf3;
+  --text-muted: #94a3b8;
+
+  /* tipografia */
+  --font-primary: 'Inter', sans-serif;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+
+  --font-light: 400;
+  --font-medium: 500;
+  --font-bold: 600;
+
+  /* espaçamento */
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
 }
 
-/* 🔥 REMOVE SETAS DO INPUT NUMBER */
+/* BASE */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-primary);
+  font-size: var(--text-md);
+  font-weight: var(--font-light);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TIPOGRAFIA GLOBAL */
+h1 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+}
+
+h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+}
+
+h3 {
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+}
+
+p, span, label {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* REMOVE SETAS DO INPUT NUMBER */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -25,25 +91,69 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* 🔥 INPUT PADRÃO GLOBAL (fica bonito no sistema todo) */
-input {
-  background: #1a2438;
-  border: 1px solid #2a3a5a;
-  border-radius: 10px;
-  color: #fff;
-  padding: 10px 14px;
-  font-family: 'Montserrat', sans-serif;
+/* INPUT GLOBAL */
+input, select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-primary);
   outline: none;
+  transition: all 0.2s ease;
 }
 
-/* 🔥 BOTÃO PADRÃO */
+input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
+}
+
+/* BOTÃO GLOBAL */
 button {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-primary);
   cursor: pointer;
-  transition: 0.2s;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  transition: all 0.2s ease;
 }
 
-/* 🔥 HOVER PADRÃO */
+/* HOVER BOTÃO */
 button:hover {
   opacity: 0.9;
+}
+
+/* CARD PADRÃO */
+.card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 20px var(--primary-soft);
+}
+
+/* CONTAINER PADRÃO */
+.container {
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* GRID PADRÃO */
+.grid {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+/* HIGHLIGHT (borda verde padrão) */
+.highlight {
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 10px var(--primary-soft);
 }

@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
           ...(ativo && styles.itemAtivo)
         }}
         onMouseEnter={e => {
-          if (!ativo) e.currentTarget.style.background = '#111827'
+          if (!ativo) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
         }}
         onMouseLeave={e => {
           if (!ativo) e.currentTarget.style.background = 'transparent'
@@ -30,7 +30,6 @@ export default function RootLayout({ children }) {
           ...styles.barra,
           ...(ativo && styles.barraAtiva)
         }} />
-
         {label}
       </a>
     )
@@ -49,7 +48,8 @@ export default function RootLayout({ children }) {
         { href: '/vendas', label: 'Vendas' },
         { href: '/financeiro', label: 'Financeiro' },
         { href: '/estoque', label: 'Estoque' },
-        { href: '/historico', label: 'Histórico' }
+        { href: '/historico', label: 'Histórico' },
+        { href: '/pedido', label: 'Pedidos' }
       ])
     }
   }, [])
@@ -75,23 +75,11 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="pt-br">
-      <body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
-        
-        {/* BOTÃO NOVO */}
+      <body>
+
         <button
           onClick={() => setSidebarAberta(!sidebarAberta)}
-          style={{
-            position: 'fixed',
-            top: 15,
-            left: 15,
-            zIndex: 1000,
-            background: '#3b82f6',
-            border: 'none',
-            padding: '10px 12px',
-            borderRadius: 8,
-            color: '#fff',
-            cursor: 'pointer'
-          }}
+          style={styles.toggle}
         >
           ☰
         </button>
@@ -101,15 +89,14 @@ export default function RootLayout({ children }) {
           <div
             style={{
               ...styles.sidebar,
-              width: sidebarAberta ? 230 : 0,
+              width: sidebarAberta ? 240 : 0,
               padding: sidebarAberta ? 20 : 0,
-              overflow: 'hidden',
-              transition: '0.3s'
+              overflow: 'hidden'
             }}
           >
 
             <div style={styles.logoArea}>
-              <div style={styles.logoMain}>Le Luxe</div>
+              <div style={styles.logoMain}>LE LUXE</div>
               <div style={styles.logoSub}>PARFUMS</div>
             </div>
 
@@ -144,34 +131,37 @@ const styles = {
   container: {
     display: 'flex',
     height: '100vh',
-    background: '#0f172a'
+    background: 'var(--bg-main)'
   },
 
   sidebar: {
-    width: 230,
-    background: '#020617',
-    padding: 20,
-    borderRight: '1px solid #0f172a'
+    background: 'rgba(2,6,23,0.8)',
+    backdropFilter: 'blur(20px)',
+    borderRight: '1px solid var(--border-default)',
+    transition: '0.3s ease'
   },
 
   logoArea: {
-    marginBottom: 40,
+    marginBottom: 25,
     textAlign: 'center'
   },
 
   logoMain: {
-    fontFamily: 'Playfair Display, serif',
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: '1px'
+    fontFamily: 'Cormorant Garamond, serif',
+    fontSize: 24,
+    fontWeight: 300,
+    letterSpacing: '2px',
+    background: 'linear-gradient(90deg, #f5d78e, #d4af37)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textRendering: 'optimizeLegibility'
   },
 
   logoSub: {
-    fontSize: 11,
+    fontSize: 8,
     color: '#94a3b8',
     letterSpacing: '4px',
-    marginTop: 6
+    marginTop: 2
   },
 
   menu: {
@@ -182,21 +172,21 @@ const styles = {
 
   item: {
     position: 'relative',
-    padding: '10px 12px',
-    borderRadius: 8,
-    color: '#cbd5f5',
+    padding: '10px 14px',
+    borderRadius: 10,
+    color: 'var(--text-muted)',
     textDecoration: 'none',
     fontSize: 14,
-    fontWeight: '500',
-    transition: '0.2s',
+    fontWeight: 500,
+    transition: 'all 0.2s ease',
     display: 'flex',
-    alignItems: 'center',
-    gap: 10
+    alignItems: 'center'
   },
 
   itemAtivo: {
-    background: '#111827',
-    color: '#fff'
+    background: 'rgba(0,255,156,0.08)',
+    color: '#fff',
+    boxShadow: '0 0 10px rgba(0,255,156,0.08)'
   },
 
   barra: {
@@ -206,7 +196,7 @@ const styles = {
     transform: 'translateY(-50%)',
     width: 3,
     height: 0,
-    background: '#3b82f6',
+    background: 'var(--primary)',
     borderRadius: 2,
     transition: '0.2s'
   },
@@ -217,9 +207,23 @@ const styles = {
 
   content: {
     flex: 1,
-    padding: 20,
+    padding: 24,
     overflow: 'auto',
-    background: '#0f172a',
+    background: 'var(--bg-main)',
     color: '#fff'
+  },
+
+  toggle: {
+    position: 'fixed',
+    top: 15,
+    left: 15,
+    zIndex: 1000,
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid var(--border-default)',
+    padding: '10px 12px',
+    borderRadius: 10,
+    color: '#fff',
+    cursor: 'pointer',
+    backdropFilter: 'blur(10px)'
   }
 }
