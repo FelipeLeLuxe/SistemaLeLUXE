@@ -2,14 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useSearchParams } from 'next/navigation'
 
 import '@fontsource/montserrat/400.css'
 import '@fontsource/montserrat/600.css'
 
-function HistoricoContent() {
+export default function Historico() {
   const [vendas, setVendas] = useState([])
   const [produtos, setProdutos] = useState([])
   const [vendasFiltradas, setVendasFiltradas] = useState([])
@@ -21,9 +20,16 @@ function HistoricoContent() {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
 
-  const params = useSearchParams()
-  const tipo = params.get('tipo')
-  const produtoURL = params.get('produto')
+  const [tipo, setTipo] = useState(null)
+  const [produtoURL, setProdutoURL] = useState(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      setTipo(params.get('tipo'))
+      setProdutoURL(params.get('produto'))
+    }
+  }, [])
 
   useEffect(() => {
     buscar()
@@ -198,11 +204,9 @@ function HistoricoContent() {
           >
             <div>
               <strong>{produto?.nome || 'Produto'}</strong><br />
-
               <span style={{ fontSize: 13, opacity: 0.7 }}>
                 {v?.cliente || 'Cliente não informado'}
               </span><br />
-
               R$ {Number(v?.valor_total || 0).toFixed(2)} | Qtd: {v?.quantidade}
             </div>
 
@@ -222,14 +226,6 @@ function HistoricoContent() {
         )
       })}
     </div>
-  )
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<div style={{ padding: 20 }}>Carregando...</div>}>
-      <HistoricoContent />
-    </Suspense>
   )
 }
 
