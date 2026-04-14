@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useSearchParams } from 'next/navigation'
 
 import '@fontsource/montserrat/400.css'
 import '@fontsource/montserrat/600.css'
 
-export default function Historico() {
+function HistoricoContent() {
   const [vendas, setVendas] = useState([])
   const [produtos, setProdutos] = useState([])
   const [vendasFiltradas, setVendasFiltradas] = useState([])
@@ -55,11 +55,12 @@ export default function Historico() {
   }
 
   function aplicarFiltro() {
-    let filtradas = [...vendas]
+    let filtradas = [...(vendas || [])]
     const hoje = new Date()
 
     if (tipo === 'hoje') {
       filtradas = filtradas.filter(v => {
+        if (!v?.created_at) return false
         const d = new Date(v.created_at)
         return d.toDateString() === hoje.toDateString()
       })
@@ -67,28 +68,33 @@ export default function Historico() {
 
     if (tipo === 'mes') {
       filtradas = filtradas.filter(v => {
+        if (!v?.created_at) return false
         const d = new Date(v.created_at)
         return d.getMonth() === hoje.getMonth()
       })
     }
 
     if (produtoURL) {
-      filtradas = filtradas.filter(v => v.produto_id == produtoURL)
+      filtradas = filtradas.filter(v => v?.produto_id == produtoURL)
     }
 
     if (busca) {
       filtradas = filtradas.filter(v => {
-        const produto = produtos.find(p => p.id == v.produto_id)
+        const produto = (produtos || []).find(p => p.id == v?.produto_id)
         return produto?.nome?.toLowerCase().includes(busca.toLowerCase())
       })
     }
 
     if (dataInicio) {
-      filtradas = filtradas.filter(v => new Date(v.created_at) >= new Date(dataInicio))
+      filtradas = filtradas.filter(v =>
+        new Date(v?.created_at) >= new Date(dataInicio)
+      )
     }
 
     if (dataFim) {
-      filtradas = filtradas.filter(v => new Date(v.created_at) <= new Date(dataFim))
+      filtradas = filtradas.filter(v =>
+        new Date(v?.created_at) <= new Date(dataFim)
+      )
     }
 
     setVendasFiltradas(filtradas)
@@ -107,15 +113,21 @@ export default function Historico() {
     window.location.href = '/historico'
   }
 
-  const total = vendasFiltradas
-    .filter(v => v.status !== 'cancelado')
-    .reduce((acc, v) => acc + Number(v.valor_total || 0), 0)
+  const vendasSafe = vendasFiltradas || []
 
-  const lucro = vendasFiltradas
-    .filter(v => v.status !== 'cancelado')
-    .reduce((acc, v) => acc + (Number(v.valor_total || 0) - Number(v.custo_total || 0)), 0)
+  const total = vendasSafe
+    .filter(v => v?.status !== 'cancelado')
+    .reduce((acc, v) => acc + Number(v?.valor_total || 0), 0)
 
-  const quantidade = vendasFiltradas.length
+  const lucro = vendasSafe
+    .filter(v => v?.status !== 'cancelado')
+    .reduce(
+      (acc, v) =>
+        acc + (Number(v?.valor_total || 0) - Number(v?.custo_total || 0)),
+      0
+    )
+
+  const quantidade = vendasSafe.length
   const ticket = quantidade > 0 ? total / quantidade : 0
   const margem = total > 0 ? (lucro / total) * 100 : 0
 
@@ -162,12 +174,12 @@ export default function Historico() {
         <Card title="Ticket Médio" value={`R$ ${ticket.toFixed(2)}`} />
       </div>
 
-      {vendasFiltradas.length === 0 && (
+      {vendasSafe.length === 0 && (
         <p style={{ marginTop: 20 }}>Nenhuma venda encontrada</p>
       )}
 
-      {vendasFiltradas.map((v, i) => {
-        const produto = produtos.find(p => p.id == v.produto_id)
+      {vendasSafe.map((v, i) => {
+        const produto = (produtos || []).find(p => p.id == v?.produto_id)
 
         return (
           <div
@@ -176,7 +188,7 @@ export default function Historico() {
               ...styles.item,
               flexDirection: mobile ? 'column' : 'row',
               alignItems: mobile ? 'flex-start' : 'center',
-              opacity: v.status === 'cancelado' ? 0.5 : 1,
+              opacity: v?.status === 'cancelado' ? 0.5 : 1,
               transform: hover === i ? 'scale(1.02)' : 'scale(1)'
             }}
             onMouseEnter={() => setHover(i)}
@@ -186,13 +198,13 @@ export default function Historico() {
               <strong>{produto?.nome || 'Produto'}</strong><br />
 
               <span style={{ fontSize: 13, opacity: 0.7 }}>
-                {v.cliente || 'Cliente não informado'}
+                {v?.cliente || 'Cliente não informado'}
               </span><br />
 
-              R$ {Number(v.valor_total).toFixed(2)} | Qtd: {v.quantidade}
+              R$ {Number(v?.valor_total || 0).toFixed(2)} | Qtd: {v?.quantidade}
             </div>
 
-            {v.status !== 'cancelado' && (
+            {v?.status !== 'cancelado' && (
               <button
                 onClick={() => cancelarVenda(v.id)}
                 style={{
@@ -208,6 +220,14 @@ export default function Historico() {
         )
       })}
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div style={{ padding: 20 }}>Carregando...</div>}>
+      <HistoricoContent />
+    </Suspense>
   )
 }
 
@@ -235,17 +255,8 @@ const styles = {
     fontFamily: 'Montserrat',
     color: '#fff'
   },
-
-  title: {
-    marginBottom: 20
-  },
-
-  filtros: {
-    display: 'flex',
-    gap: 12,
-    marginBottom: 25
-  },
-
+  title: { marginBottom: 20 },
+  filtros: { display: 'flex', gap: 12, marginBottom: 25 },
   input: {
     background: '#1a2438',
     border: '1px solid #2a3a5a',
@@ -253,7 +264,6 @@ const styles = {
     borderRadius: 10,
     color: '#fff'
   },
-
   button: {
     background: '#3b82f6',
     border: 'none',
@@ -262,13 +272,7 @@ const styles = {
     color: '#fff',
     cursor: 'pointer'
   },
-
-  cards: {
-    display: 'flex',
-    gap: 20,
-    marginBottom: 30
-  },
-
+  cards: { display: 'flex', gap: 20, marginBottom: 30 },
   card: {
     background: '#1a2438',
     padding: 20,
@@ -276,16 +280,8 @@ const styles = {
     minWidth: 160,
     transition: 'all 0.2s ease'
   },
-
-  cardTitle: {
-    opacity: 0.6,
-    fontSize: 13
-  },
-
-  cardValue: {
-    fontWeight: 600
-  },
-
+  cardTitle: { opacity: 0.6, fontSize: 13 },
+  cardValue: { fontWeight: 600 },
   item: {
     background: '#1a2438',
     padding: 14,
@@ -295,7 +291,6 @@ const styles = {
     gap: 10,
     transition: 'all 0.2s ease'
   },
-
   cancelar: {
     background: '#ef4444',
     border: 'none',
