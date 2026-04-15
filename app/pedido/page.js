@@ -116,6 +116,37 @@ export default function Pedido() {
 
     await supabase.from('pedido_itens').insert(itensFormatados)
 
+    const hoje = new Date().toISOString().split('T')[0]
+
+    const { data: gasto } = await supabase
+      .from('gastos')
+      .insert([{
+        nome: `Pedido #${pedido.id}`,
+        valor: total,
+        tipo: 'variavel',
+        origem: 'pedido',
+        pedido_id: pedido.id,
+        data_pagamento: hoje
+      }])
+      .select()
+      .single()
+
+    await supabase.from('movimentacoes').insert([{
+      tipo: 'saida',
+      valor: total,
+      descricao: `Pedido #${pedido.id}`,
+      origem: 'pedido',
+      pedido_id: pedido.id,
+      gasto_id: gasto.id
+    }])
+
+    const { data: s } = await supabase.from('saldo').select('*').limit(1)
+    const saldoAtual = s?.[0]?.valor || 0
+
+    await supabase.from('saldo').update({
+      valor: saldoAtual - total
+    }).neq('id','')
+
     setItens([])
     setObs('')
     setData('')
@@ -142,6 +173,9 @@ export default function Pedido() {
         }
       }
     }
+
+    await supabase.from('movimentacoes').delete().eq('pedido_id', p.id)
+    await supabase.from('gastos').delete().eq('pedido_id', p.id)
 
     await supabase.from('pedidos').delete().eq('id', p.id)
     carregarPedidos()
