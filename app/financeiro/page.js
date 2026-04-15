@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function Financeiro() {
   const [vendas, setVendas] = useState([])
@@ -34,10 +34,7 @@ export default function Financeiro() {
   const gastosPagos = gastos.filter(g => g.data_pagamento && g.data_pagamento <= hoje)
   const gastosFuturos = gastos.filter(g => g.data_pagamento && g.data_pagamento > hoje)
 
-  const vendasHoje = vendas.filter(v => {
-    if (!v.data) return true
-    return v.data <= hoje
-  })
+  const vendasHoje = vendas.filter(v => !v.data || v.data <= hoje)
 
   const entradas = vendasHoje.reduce((a,v)=>a+Number(v.valor_total||0),0)
 
@@ -51,7 +48,6 @@ export default function Financeiro() {
   const aPagar = gastosFuturos.reduce((a,g)=>a+Number(g.valor||0),0)
 
   const disponivel = saldo - aPagar
-
   const podeInvestir = disponivel > 0 ? disponivel : 0
 
   async function atualizarSaldo(v) {
@@ -133,35 +129,33 @@ export default function Financeiro() {
 
   return (
     <div style={styles.container}>
-      <h1>Financeiro</h1>
+      <h1 style={styles.title}>Financeiro</h1>
 
       <div style={styles.cards}>
         <Card title="Faturamento" value={entradas}/>
         <Card title="Lucro" value={lucro}/>
-        <Card title="Gastos (pagos)" value={totalGastos}/>
+        <Card title="Gastos" value={totalGastos}/>
         <Card title="Saldo" value={saldo}/>
         <Card title="A pagar" value={aPagar}/>
         <Card title="Disponível" value={disponivel}/>
-        <Card title="Pode investir" value={podeInvestir}/>
+        <Card title="Investir" value={podeInvestir}/>
       </div>
 
       <div style={styles.box}>
-        <input placeholder="Ex: -100 ou 200" value={ajuste} onChange={e=>setAjuste(e.target.value)} />
-        <button onClick={ajustarSaldo}>Aplicar ajuste</button>
+        <input style={styles.input} placeholder="Ex: -100 ou 200" value={ajuste} onChange={e=>setAjuste(e.target.value)} />
+        <button style={styles.buttonSecondary} onClick={ajustarSaldo}>Aplicar</button>
       </div>
 
       <div style={styles.box}>
-        <input placeholder="Nome" value={nome} onChange={e=>setNome(e.target.value)} />
-        <input placeholder="Valor" value={valor} onChange={e=>setValor(e.target.value)} />
-        <input type="date" value={dataPagamento} onChange={e=>setDataPagamento(e.target.value)} />
-
-        <select value={tipo} onChange={e=>setTipo(e.target.value)}>
+        <input style={styles.input} placeholder="Nome" value={nome} onChange={e=>setNome(e.target.value)} />
+        <input style={styles.input} placeholder="Valor" value={valor} onChange={e=>setValor(e.target.value)} />
+        <input style={styles.input} type="date" value={dataPagamento} onChange={e=>setDataPagamento(e.target.value)} />
+        <select style={styles.input} value={tipo} onChange={e=>setTipo(e.target.value)}>
           <option value="fixo">Fixo</option>
           <option value="variavel">Variável</option>
           <option value="aleatorio">Aleatório</option>
         </select>
-
-        <button onClick={addGasto}>Salvar</button>
+        <button style={styles.button} onClick={addGasto}>Salvar</button>
       </div>
 
       <div style={styles.grid}>
@@ -170,33 +164,18 @@ export default function Financeiro() {
         <Box title="Aleatórios" lista={aleatorios} del={deletar}/>
 
         <div style={styles.boxCard}>
-          <PieChart width={250} height={250}>
-            <Pie data={dadosPizza} dataKey="value" outerRadius={90}>
-              {dadosPizza.map((_, i)=>(
-                <Cell key={i} fill={cores[i % cores.length]} />
-              ))}
-            </Pie>
-            <Tooltip/>
-          </PieChart>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={dadosPizza} dataKey="value" outerRadius={80}>
+                {dadosPizza.map((_, i)=>(
+                  <Cell key={i} fill={cores[i % cores.length]} />
+                ))}
+              </Pie>
+              <Tooltip/>
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
-    </div>
-  )
-}
-
-function Box({title, lista, del}) {
-  return (
-    <div style={styles.boxCard}>
-      <h3>{title}</h3>
-      {lista.map(i=>(
-        <div key={i.id} style={styles.item}>
-          <span>{i.nome}</span>
-          <div style={{display:'flex',gap:10}}>
-            <span>R$ {i.valor}</span>
-            <button style={styles.delete} onClick={()=>del(i)}>x</button>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
@@ -205,12 +184,12 @@ function Card({title,value}) {
   const [hover, setHover] = useState(false)
 
   function cor() {
-    if (title.includes('Lucro')) return '#22c55e'
-    if (title.includes('Faturamento')) return '#3b82f6'
-    if (title.includes('Gastos')) return '#ef4444'
-    if (title.includes('Saldo')) return '#38bdf8'
-    if (title.includes('Disponível')) return '#22c55e'
-    if (title.includes('investir')) return '#a855f7'
+    if (title === 'Lucro') return '#22c55e'
+    if (title === 'Faturamento') return '#3b82f6'
+    if (title === 'Gastos') return '#ef4444'
+    if (title === 'Saldo') return '#38bdf8'
+    if (title === 'Disponível') return '#22c55e'
+    if (title === 'Investir') return '#a855f7'
     return '#fff'
   }
 
@@ -218,142 +197,157 @@ function Card({title,value}) {
     <div
       style={{
         ...styles.card,
-        transform: hover ? 'translateY(-4px)' : 'none',
-        boxShadow: hover ? '0 10px 25px rgba(0,0,0,0.4)' : 'none'
+        transform: hover ? 'translateY(-3px)' : 'none'
       }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div style={{ fontSize: 13, opacity: 0.6 }}>{title}</div>
-
-      <b style={{
-        fontSize: 20,
-        color: cor(),
-        textShadow: `0 0 8px ${cor()}40`
-      }}>
+      <div style={styles.cardTitle}>{title}</div>
+      <div style={{...styles.cardValue, color: cor()}}>
         R$ {Number(value).toFixed(2)}
-      </b>
+      </div>
     </div>
   )
 }
+
+function Box({title, lista, del}) {
+  return (
+    <div style={styles.boxCard}>
+      <h3 style={styles.boxTitle}>{title}</h3>
+      {lista.map(i=>(
+        <div key={i.id} style={styles.item}>
+          <span style={styles.nome}>{i.nome}</span>
+          <div style={styles.itemRight}>
+            <span style={styles.valor}>R$ {i.valor}</span>
+            <button style={styles.delete} onClick={()=>del(i)}>x</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const styles = {
-  container: {
-    padding: 40,
-    background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
-    color: '#fff',
-    minHeight: '100vh'
+  container:{
+    padding:20,
+    background:'#0f172a',
+    color:'#fff',
+    minHeight:'100vh'
   },
 
-  cards: {
-    display: 'flex',
-    gap: 12,
-    flexWrap: 'wrap',
-    marginBottom: 20
+  title:{
+    fontSize:22,
+    marginBottom:12
   },
 
-  card: {
-    background: 'rgba(22, 32, 51, 0.7)',
-    padding: 16,
-    borderRadius: 14,
-    minWidth: 150,
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255,255,255,0.05)',
-    transition: 'all 0.2s ease',
-    cursor: 'pointer'
+  cards:{
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(110px, 1fr))',
+    gap:8,
+    marginBottom:12
   },
 
-  cardHover: {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
-    border: '1px solid rgba(59,130,246,0.3)'
+  card:{
+    background:'#162033',
+    padding:10,
+    borderRadius:10,
+    transition:'0.2s'
   },
 
-  box: {
-    background: 'rgba(22, 32, 51, 0.7)',
-    padding: 16,
-    borderRadius: 14,
-    marginTop: 10,
-    display: 'flex',
-    gap: 10,
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255,255,255,0.05)'
+  cardTitle:{
+    fontSize:11,
+    opacity:0.7
   },
 
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr 1fr',
-    gap: 20,
-    marginTop: 20
+  cardValue:{
+    fontSize:14,
+    fontWeight:'bold'
   },
 
-  boxCard: {
-    background: 'rgba(22, 32, 51, 0.7)',
-    padding: 18,
-    borderRadius: 16,
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255,255,255,0.05)',
-    transition: 'all 0.2s ease'
+  box:{
+    background:'#162033',
+    padding:10,
+    borderRadius:10,
+    marginTop:8,
+    display:'flex',
+    gap:8,
+    flexWrap:'wrap'
   },
 
-  item: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-    padding: 10,
-    borderRadius: 10,
-    background: '#020617'
+  input:{
+    flex:'1 1 80px',
+    minWidth:80,
+    padding:8,
+    borderRadius:8,
+    border:'1px solid #1e293b',
+    background:'#020617',
+    color:'#fff'
   },
 
-  delete: {
-    background: '#ef4444',
-    border: 'none',
-    borderRadius: 8,
-    color: '#fff',
-    cursor: 'pointer',
-    width: 28,
-    height: 28,
-    fontWeight: 'bold',
-    transition: '0.2s'
+  button:{
+    background:'#22c55e',
+    border:'none',
+    padding:'8px 10px',
+    borderRadius:8,
+    color:'#fff'
   },
 
-  input: {
-    padding: 12,
-    borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: '#020617',
-    color: '#fff',
-    outline: 'none',
-    transition: '0.2s'
+  buttonSecondary:{
+    background:'#3b82f6',
+    border:'none',
+    padding:'8px 10px',
+    borderRadius:8,
+    color:'#fff'
   },
 
-  select: {
-    padding: 12,
-    borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: '#020617',
-    color: '#fff'
+  grid:{
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
+    gap:10,
+    marginTop:12
   },
 
-  button: {
-    background: '#22c55e',
-    border: 'none',
-    padding: '12px 16px',
-    borderRadius: 10,
-    color: '#fff',
-    cursor: 'pointer',
-    fontWeight: 600,
-    transition: '0.2s'
+  boxCard:{
+    background:'#162033',
+    padding:12,
+    borderRadius:12
   },
 
-  buttonSecondary: {
-    background: '#3b82f6',
-    border: 'none',
-    padding: '12px 16px',
-    borderRadius: 10,
-    color: '#fff',
-    cursor: 'pointer',
-    fontWeight: 600,
-    transition: '0.2s'
+  boxTitle:{
+    fontSize:14,
+    marginBottom:6
+  },
+
+  item:{
+    display:'flex',
+    justifyContent:'space-between',
+    alignItems:'center',
+    marginTop:6,
+    padding:8,
+    borderRadius:8,
+    background:'#020617'
+  },
+
+  nome:{
+    fontSize:12
+  },
+
+  valor:{
+    fontSize:12
+  },
+
+  itemRight:{
+    display:'flex',
+    alignItems:'center',
+    gap:6
+  },
+
+  delete:{
+    background:'#ef4444',
+    border:'none',
+    borderRadius:6,
+    color:'#fff',
+    width:22,
+    height:22
   }
 }
